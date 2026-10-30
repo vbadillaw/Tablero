@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Tablero de Combate</title>
+    
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Tablero">
+    <meta name="theme-color" content="#121212">
+    
+    <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%20%22Tablero%20de%20Combate%22%2C%20%22short_name%22%3A%20%22Tablero%22%2C%20%22start_url%22%3A%20%22.%22%2C%20%22display%22%3A%20%22standalone%22%2C%20%22background_color%22%3A%20%22%23121212%22%2C%20%22theme_color%22%3A%20%22%23121212%22%7D">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-evenly;
+            align-items: center;
+            min-height: 100vh;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            width: 100vw;
+            overflow-x: hidden;
+            overflow-y: auto;
+            transition: background-color 0.3s ease;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        body.time-up {
+            background-color: #d32f2f !important;
+        }
+
+        .section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            padding: 10px;
+        }
+
+        .disciplines-header {
+            font-size: clamp(12px, 3vmin, 24px);
+            color: #888888;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .round-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            width: 100%;
+        }
+        
+        .round-display {
+            font-size: clamp(24px, 6vmin, 40px);
+            font-weight: bold;
+            color: #ffffff;
+            min-width: 140px;
+            text-align: center;
+        }
+
+        .main-timer-display {
+            font-size: clamp(100px, 28vmin, 300px);
+            font-weight: bold;
+            color: #ffeb3b;
+            line-height: 1;
+            text-shadow: 0 0 20px rgba(255, 235, 59, 0.15);
+        }
+
+        .secondary-timer-display {
+            font-size: clamp(60px, 15vmin, 150px);
+            font-weight: bold;
+            color: #03a9f4;
+            line-height: 1;
+        }
+        
+        .secondary-label {
+            font-size: clamp(12px, 3vmin, 24px);
+            color: #aaaaaa;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        .controls-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin: 15px 0;
+            width: 100%;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            max-width: 600px;
+        }
+        
+        .custom-time-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background-color: #1e1e1e;
+            padding: 10px 15px;
+            border-radius: 12px;
+            border: 1px solid #333;
+            flex-wrap: wrap;
+        }
+
+        input[type="number"] {
+            background-color: #242424;
+            color: #ffffff;
+            border: 2px solid #555555;
+            border-radius: 6px;
+            padding: 8px;
+            font-size: clamp(16px, 4vmin, 20px);
+            font-family: 'Courier New', Courier, monospace;
+            width: 70px;
+            text-align: center;
+            font-weight: bold;
+            user-select: auto;
+            -webkit-user-select: auto;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #ffeb3b;
+        }
+
+        .colon { font-size: clamp(16px, 4vmin, 24px); font-weight: bold; color: #888; }
+
+        button {
+            background-color: #242424;
+            color: #ffffff;
+            border: 2px solid #555555;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: clamp(14px, 3.5vmin, 20px);
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-transform: uppercase;
+            flex-grow: 1;
+            max-width: 200px;
+            touch-action: manipulation;
+            position: relative;
+            z-index: 10;
+        }
+
+        button:active {
+            background-color: #444444;
+            transform: scale(0.95);
+        }
+
+        .btn-play { border-color: #4caf50; color: #4caf50; }
+        .btn-pause { border-color: #ff9800; color: #ff9800; }
+        .btn-reset { border-color: #f44336; color: #f44336; }
+        .btn-secondary { border-color: #03a9f4; color: #03a9f4; }
+        .btn-small { padding: 10px 15px; font-size: clamp(12px, 3vmin, 16px); color: #cccccc; flex-grow: 0;}
+    </style>
+</head>
+<body>
+
+    <div class="disciplines-header">JUDO • BJJ • SAMBO</div>
+
+    <div class="section">
+        <div class="round-container">
+            <button onclick="changeRound(-1)" class="btn-small">➖</button>
+            <div class="round-display" id="roundDisplay">Ronda 1</div>
+            <button onclick="changeRound(1)" class="btn-small">➕</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="main-timer-display" id="mainDisplay">05:00</div>
+        
+        <div class="controls-group">
+            <div class="controls">
+                <button class="btn-small" onclick="setMainTime(3, 0)">3 Min</button>
+                <button class="btn-small" onclick="setMainTime(4, 0)">4 Min</button>
+                <button class="btn-small" onclick="setMainTime(5, 0)">5 Min</button>
+                <button class="btn-small" onclick="setMainTime(10, 0)">10 Min</button>
+            </div>
+            <div class="custom-time-container">
+                <input type="number" id="inputMin" placeholder="Min" min="0" max="99">
+                <span class="colon">:</span>
+                <input type="number" id="inputSec" placeholder="Seg" min="0" max="59">
+                <button class="btn-small" style="border-color: #ffffff; color: #ffffff;" onclick="setCustomTime()">Fijar</button>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-play" onclick="startMain()">▶ Play</button>
+            <button class="btn-pause" onclick="pauseMain()">⏸ Pausa</button>
+            <button class="btn-reset" onclick="resetMain()">⏹ Reset</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="secondary-label">Inmovilización (Osaekomi / Uderzhaniye)</div>
+        <div class="secondary-timer-display" id="secondaryDisplay">00:00</div>
+        <div class="controls">
+            <button class="btn-secondary" onclick="toggleSecondary()" id="btnSecondaryToggle">▶ Iniciar</button>
+            <button class="btn-reset" onclick="resetSecondary()">⏹ Reset</button>
+        </div>
+    </div>
+
+    <script>
+        let mainTimeTotal = 5 * 60;
+        let mainTimeLeft = mainTimeTotal;
+        let mainInterval = null;
+        let secondaryTimeTotal = 0;
+        let secondaryInterval = null;
+        let isSecondaryRunning = false;
+        let currentRound = 1;
+        let audioCtx = null;
+
+        const elMainDisplay = document.getElementById('mainDisplay');
+        const elSecondaryDisplay = document.getElementById('secondaryDisplay');
+        const elRoundDisplay = document.getElementById('roundDisplay');
+        const elBtnSecondaryToggle = document.getElementById('btnSecondaryToggle');
+
+        function playHornAndSpeak(word) {
+            try {
+                if (!audioCtx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) audioCtx = new AudioContext();
+                }
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                if (audioCtx) {
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    
+                    oscillator.type = 'square';
+                    oscillator.frequency.setValueAtTime(word === 'Hajime' ? 500 : 350, audioCtx.currentTime);
+                    
+                    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioCtx.currentTime + 0.5);
+                }
+            } catch(e) {
+                console.warn("Bocina silenciada");
+            }
+
+            try {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(word);
+                    utterance.lang = 'ja-JP';
+                    utterance.rate = 1.1;
+                    window.speechSynthesis.speak(utterance);
+                }
+            } catch(e) {
+                console.warn("Voz silenciada");
+            }
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function updateMainDisplay() { elMainDisplay.textContent = formatTime(mainTimeLeft); }
+        function updateSecondaryDisplay() { elSecondaryDisplay.textContent = formatTime(secondaryTimeTotal); }
+
+        function setMainTime(minutes, seconds) {
+            pauseMain();
+            mainTimeTotal = (minutes * 60) + seconds;
+            mainTimeLeft = mainTimeTotal;
+            document.body.classList.remove('time-up');
+            updateMainDisplay();
+        }
+
+        function setCustomTime() {
+            const min = parseInt(document.getElementById('inputMin').value) || 0;
+            const sec = parseInt(document.getElementById('inputSec').value) || 0;
+            if (min === 0 && sec === 0) return; 
+            setMainTime(min, sec);
+            document.getElementById('inputMin').value = '';
+            document.getElementById('inputSec').value = '';
+        }
+
+        function startMain() {
+            if (mainInterval !== null || mainTimeLeft <= 0) return;
+            document.body.classList.remove('time-up');
+            
+            playHornAndSpeak('Hajime');
+            
+            mainInterval = setInterval(() => {
+                mainTimeLeft--;
+                updateMainDisplay();
+                if (mainTimeLeft <= 0) {
+                    pauseMain();
+                    document.body.classList.add('time-up');
+                    playHornAndSpeak('Mate');
+                }
+            }, 1000);
+        }
+
+        function pauseMain() {
+            if (mainInterval !== null) {
+                clearInterval(mainInterval);
+                mainInterval = null;
+            }
+        }
+
+        function resetMain() {
+            pauseMain();
+            mainTimeLeft = mainTimeTotal;
+            document.body.classList.remove('time-up');
+            updateMainDisplay();
+        }
+
+        function toggleSecondary() {
+            if (isSecondaryRunning) {
+                clearInterval(secondaryInterval);
+                secondaryInterval = null;
+                isSecondaryRunning = false;
+                elBtnSecondaryToggle.textContent = '▶ Iniciar';
+            } else {
+                isSecondaryRunning = true;
+                elBtnSecondaryToggle.textContent = '⏸ Pausar';
+                if (secondaryInterval) clearInterval(secondaryInterval);
+                secondaryInterval = setInterval(() => {
+                    secondaryTimeTotal++;
+                    updateSecondaryDisplay();
+                }, 1000);
+            }
+        }
+
+        function resetSecondary() {
+            if (secondaryInterval !== null) {
+                clearInterval(secondaryInterval);
+                secondaryInterval = null;
+            }
+            isSecondaryRunning = false;
+            secondaryTimeTotal = 0;
+            elBtnSecondaryToggle.textContent = '▶ Iniciar';
+            updateSecondaryDisplay();
+        }
+
+        function changeRound(delta) {
+            currentRound += delta;
+            if (currentRound < 1) currentRound = 1;
+            elRoundDisplay.textContent = `Ronda ${currentRound}`;
+        }
+
+        updateMainDisplay();
+        updateSecondaryDisplay();
+    </script>
+</body>
+</html>
