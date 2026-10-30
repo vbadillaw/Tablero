@@ -258,7 +258,7 @@
                     const gainNode = audioCtx.createGain();
                     
                     oscillator.type = 'square';
-                    oscillator.frequency.setValueAtTime(word === 'Hajime' ? 500 : 350, audioCtx.currentTime);
+                    oscillator.frequency.setValueAtTime(word === 'ハジメ' ? 500 : 350, audioCtx.currentTime);
                     
                     gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
                     gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
@@ -278,7 +278,7 @@
                     window.speechSynthesis.cancel();
                     const utterance = new SpeechSynthesisUtterance(word);
                     utterance.lang = 'ja-JP';
-                    utterance.rate = 1.1;
+                    utterance.rate = 1.0;
                     window.speechSynthesis.speak(utterance);
                 }
             } catch(e) {
@@ -316,7 +316,7 @@
             if (mainInterval !== null || mainTimeLeft <= 0) return;
             document.body.classList.remove('time-up');
             
-            playHornAndSpeak('Hajime');
+            playHornAndSpeak('ハジメ');
             
             mainInterval = setInterval(() => {
                 mainTimeLeft--;
@@ -324,7 +324,7 @@
                 if (mainTimeLeft <= 0) {
                     pauseMain();
                     document.body.classList.add('time-up');
-                    playHornAndSpeak('Mate');
+                    playHornAndSpeak('マッテ');
                 }
             }, 1000);
         }
